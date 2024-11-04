@@ -182,7 +182,7 @@
 volatile uint32_t startTime = 0;
 volatile uint32_t startTime2 = 0; 
 
-#define TIME_LIMIT 5000 // Time limit in milliseconds
+#define TIME_LIMIT 10 // Time limit in milliseconds
 
 bool Time_newflag = true;
 
@@ -393,17 +393,15 @@ void checkAccelX(void) {
     LSM6DSL_axes_acc_t acc;
     LSM6DSL_get_axes_acc(&acc);
     
-    HAL_GetTick();
-    
     if (LSM6DSL_is_accelerated()) {
       Time_newflag = true;
     } else {
         if (startTime == 0) {
-            TIM_start_F0(); // Start timer
-            startTime = HAL_GetTick();
-        } else if ((HAL_GetTick() - startTime) >= TIME_LIMIT) {
+            TIM_start_E1(); // Start timer
+            startTime = tick();
+        } else if ((tick() - startTime) >= TIME_LIMIT) {
             Time_newflag = false;
-            TIM_stop_F0();
+            TIM_stop_E1();
         }
     }
 }

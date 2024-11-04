@@ -28,7 +28,6 @@ static void TIM_init_D0 (void);
 static void TIM_init_D1 (void);
 static void TIM_init_E0 (void);
 static void TIM_init_E1 (void);
-static void TIM_init_F0 (void);
 
 static uint32_t cntdown_to_next_bat_lvl_meas = 0;
 
@@ -44,7 +43,6 @@ void TIM_init(void){
     TIM_init_D1();
     TIM_init_E0();
     TIM_init_E1();
-    TIM_init_F0();
 }
 
 static void TIM_init_C0 (void){
@@ -140,42 +138,6 @@ static void TIM_init_E1(void){
 }
 
 
-/**
-@brief          use to impliment a LCD on-off
-*/
-/*
-static void TIM_init_F0(void){
-    TCF0.CTRLA = 0;       // Set prescaler 
-    TCF0.CTRLB = TC_WGMODE_NORMAL_gc;        // Set normal mode
-    TCF0.CTRLD = 0;
-    TCF0.CTRLE = 0;
-    TCF0.CNT = 0;                            // Clear counter
-    TCF0.PER = __TF0_PER;
-    TCF0.INTCTRLA = TC_OVFINTLVL_LO_gc;      // Enable low-level overflow interrupt
-}
-*/
-
-static void TIM_init_F0 (void){
-    TCF0.CTRLA = 0;                  
-    TCF0.CTRLB = __TC0_CTRLB;        
-    TCF0.CTRLC = __TC0_CTRLC;       
-    TCF0.CTRLD = __TC0_CTRLD;        
-    TCF0.CTRLE = __TC0_CTRLE;        
-    TCF0.INTCTRLA = __TC0_INTCTRLA;  
-    TCF0.INTCTRLB = __TC0_INTCTRLB;  
-    TCF0.CTRLFSET = __TC0_CTRLFSET;  
-    TCF0.CCA = __TC0_CCA;            
-    TCF0.CCB = __TC0_CCB;            
-    TCF0.CCC = __TC0_CCC;           
-    TCF0.CCD = __TC0_CCD;            
-}
-
-/**
-@brief          use to impliment a LCD on-off
-*/
-
-
-
 void TIM_start_C0(void){
     TCC0.CTRLA = __TC0_CTRLA;
 }
@@ -227,21 +189,6 @@ void TIM_stop_E1(void){
 
 
 
-/**
-@brief          use to impliment a LCD on-off
-*/
-
-void TIM_start_F0(void){
-    TCF0.CTRLA = __TC0_CTRLA;
-}
-void TIM_stop_F0(void){
-    TCF0.CTRLA = 0;                  
-}
-/**
-@brief          use to impliment a LCD on-off
-*/
-
-
 
 #pragma vector = TCC1_CCA_vect
 __interrupt void TC1_compA( void ){
@@ -271,25 +218,7 @@ __interrupt void TE0_compA( void ){
 
 #pragma vector = TCE1_CCA_vect
 __interrupt void TE1_compA( void ){
-
+    millis++;
 }
 
-
-
-
-/**
-@brief          use to impliment a LCD on-off
-*/
-
-#pragma vector = TCF0_CCA_vect
-__interrupt void TF0_compA(void) {
-    millis++; // Increment the milliseconds counter
-}
-// Function to get the current tick count
-uint32_t HAL_GetTick(void) {
-    return millis;  // Return the current tick count
-}
-
-/**
-@brief          use to impliment a LCD on-off
-*/
+uint32_t tick (void) { return millis; }
