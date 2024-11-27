@@ -17,6 +17,8 @@
 @brief          use to impliment a LCD on-off
 */
 extern volatile bool Lcd_on_flag;
+volatile uint8_t second = 0;
+uint8_t Time = 10;                              // Time in seconds
 /**
 @brief          use to impliment a LCD on-off
 */
@@ -217,6 +219,10 @@ __interrupt void TE0_compA( void ){
 
 #pragma vector = TCE1_CCA_vect
 __interrupt void TE1_compA( void ){
+    second++;
+  if (second >= Time){
     Lcd_on_flag = false;
+    second = 0;
+  }
     TCE1.CNT = 0;
 }

@@ -1,10 +1,10 @@
 #define VERSION_MAJOR     5
 #define VERSION_MINOR     0
 #define VERSION_QFE       26 
-#define VERSION_BUILD     197
+#define VERSION_BUILD     244
 
-#define VERSION_BUILD_DATE    "04/11/2024"
-#define VERSION_BUILD_TIME    "15:25:40UTC"
+#define VERSION_BUILD_DATE    "05/11/2024"
+#define VERSION_BUILD_TIME    "11:15:08UTC"
 #ifndef VER_H
 #define VER_H
 #define		_STR(x) #x

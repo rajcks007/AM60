@@ -2,19 +2,19 @@
 *@file          main.c
 *
 */
-#include <ioAVR.h>       
+#include <ioavr.h>     
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>                           
 #include <intrinsics.h>
-#include "GPIO.h"
+#include "gpio.h"
 #include "CPU.h"
 #include "timer.h"
 #include "AC.h"
 #include "interrupt.h"
 #include "LSM6DSL.h"
 #include "wdt.h"
-#include "version.h"
+#include "Version.h"
 #include "LCD.h"
 #include "bluetooth.h"
 #include "RTC.h"
@@ -59,14 +59,15 @@ floating_mean_val_t floating_mean_val;
 #define NOISE_MEAN_SIZE             35 
 
 
-/**
+/*******************************************************************************
 @brief          use to impliment a LCD on-off
-*/
+*******************************************************************************/
+// Make all declareation here to devlop a function for LCD on-off
 volatile bool Lcd_on_flag = true;
+extern bool volatile light_flag;
+extern bool volatile light_flag1;
 
-/**
-@brief          use to impliment a LCD on-off
-*/
+/******************************************************************************/
 
 int main(void) {
     const MEAS_meas_par_t noise_meas_param = { NOISE_SAMPLING_RATE, NOISE_SAMPLING_SIZE, NOISE_MEAN_SIZE };
@@ -85,8 +86,7 @@ int main(void) {
 
 /*
 TODO:
-1. Align code (check indentations)
-2. Make a separatly funktions for start/stop/reset LCD-observations timer (where you call start/stop and set to 0 the timer E1)
+1. Make a separatly funktions for start/stop/reset LCD-observations timer (where you call start/stop and set to 0 the timer E1)
 
 The code is now running rigth.
 Oleg.
@@ -97,10 +97,13 @@ Oleg.
         wdt_reset();
                
 //      LCDP.is_z_tilted = LSM6DSL_is_z_tilted();
+
+/*******************************************************************************
+            check weather device is accelerated or not
+            and make a flage true if acceleraton is detected
+            @brief          use to impliment a LCD on-off
+*******************************************************************************/
         
-/**
-@brief          use to impliment a LCD on-off
-*/
         if (LSM6DSL_is_accelerated()) {
           if (!Lcd_on_flag)
             TIM_start_E1();
@@ -109,35 +112,75 @@ Oleg.
         } 
        
         wdt_reset();
-        
-        if (Lcd_on_flag){
+
+/*******************************************************************************
+    if acceleration detected then in normal condion and LCD is On
+*******************************************************************************/
+
+      if (Lcd_on_flag){               // start if statement
           
-        noise_lvl = MEAS_read_val(&noise_meas_param, op_param.Kalibrations_Wert);
-        display_value = ADC_val_to_LCD_val(noise_lvl, op_param.Kalibrations_Wert);
+          noise_lvl = MEAS_read_val(&noise_meas_param, op_param.Kalibrations_Wert);
+          display_value = ADC_val_to_LCD_val(noise_lvl, op_param.Kalibrations_Wert);
           
-      if (!op_param.show_min_value) {
-            if (display_value <= op_param.min_val) {
-                op_param.min_val = display_value;
+            if (!op_param.show_min_value) {
+                  if (display_value <= op_param.min_val) {
+                      op_param.min_val = display_value;
+                  }
+              tmp = op_param.min_val;
             }
-            tmp = op_param.min_val;
-        }
+            else {
+                display_value = tmp;
+                op_param.min_val = LCD_MAX_VAL;
+            }
+
+          display_bt_status();
+
+          LCD_Show_All(display_value, BAT_LVL_DO_NOT_REFRESH, FILTER_DO_NOT_REFRESH, KH_DO_NOT_REFRESH);
+        
+          if (check_bat_lvl) {
+            check_bat_lvl = false;
+            op_param.bat_lvl = BAT_read_level(op_param.battery_calib_val);
+            BAT_show_level(op_param.bat_lvl);
+          }
+        
+/*******************************************************************************
+            if LED and back_light is ON previuse then make it  ON again       
+*******************************************************************************/
+        
+          if (light_flag1){
+            SET_BIT(FLASHLIGHT_PORT, FLASHLIGHT_PIN) ;
+            SET_BIT(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_BIT);
+          }
+          // if back_light is ON previuse then make it  ON again
+          else if (light_flag){
+            SET_BIT(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_BIT);
+          }
+                
+    }           // end if statement
+        
+/*******************************************************************************
+            if acceleration not detected then in LCD is OFF
+*******************************************************************************/
+    
         else {
-            display_value = tmp;
-            op_param.min_val = LCD_MAX_VAL;
+            LCD_turn_off();
+            TIM_stop_E1();
+          
+              // back_light  and LED is also OFF if it is on
+              if (light_flag1){
+                CLR_BIT(FLASHLIGHT_PORT, FLASHLIGHT_PIN) ;
+                CLR_BIT(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_BIT);
+              }
+              // back_light is OFF if it is ON
+              else if (light_flag)
+              {     
+                CLR_BIT(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_BIT);
+              }
+            // Make the timer stop to stop toggal the bit of LCD port 4 and PIN4
+            TCC1.CTRLA = 0; 
         }
-
-        display_bt_status();
-
-        LCD_Show_All(display_value, BAT_LVL_DO_NOT_REFRESH, FILTER_DO_NOT_REFRESH, KH_DO_NOT_REFRESH);
-
-        }
-        else {
-          LCD_turn_off();
-          TIM_stop_E1();
-        }
-/**
-@brief          use to impliment a LCD on-off
-*/
+        
+/******************************************************************************/        
         wdt_reset();
         
         if (op_param.button_left_pushed || BUT_is_left_button_pressed())
@@ -145,15 +188,6 @@ Oleg.
 
         if (op_param.button_right_pushed || BUT_is_right_button_pressed())
             BUT_handle_right_button_click(&op_param);
-
-
-        if (check_bat_lvl) {
-            check_bat_lvl = false;
-            op_param.bat_lvl = BAT_read_level(op_param.battery_calib_val);
-            BAT_show_level(op_param.bat_lvl);
-        }
-        
-        
         
         Check_intern_extern_Sensor();
 
